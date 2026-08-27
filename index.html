@@ -7,14 +7,18 @@
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:Arial,sans-serif;background:#0e1621;color:#fff}
-button,input{font:inherit}
-button{border:0;cursor:pointer}
+button,input{font:inherit}button{border:0;cursor:pointer}
 .app{height:100%;display:flex;overflow:hidden}
 .sidebar{width:360px;background:#17212b;border-right:1px solid #263746;display:flex;flex-direction:column}
-.top{height:64px;display:flex;align-items:center;padding:10px 14px;gap:12px}
+.top{height:64px;display:flex;align-items:center;padding:10px 14px;gap:12px;position:relative}
 .logo{font-size:22px;font-weight:700;flex:1}
 .iconbtn{width:40px;height:40px;border-radius:50%;background:transparent;color:#aebbc7;font-size:22px}
 .iconbtn:hover{background:#223242}
+.more-wrap{position:relative}
+.more-menu{display:none;position:absolute;right:0;top:48px;width:190px;background:#17212b;border:1px solid #263746;border-radius:10px;box-shadow:0 8px 28px #0008;z-index:100}
+.more-menu.show{display:block}
+.more-menu button{width:100%;padding:13px 15px;text-align:left;background:transparent;color:#fff}
+.more-menu button:hover{background:#223242}
 .search{padding:0 12px 10px}
 .search input{width:100%;height:40px;border:0;outline:0;border-radius:9px;background:#242f3a;color:#fff;padding:0 14px}
 .chatlist{overflow:auto;flex:1}
@@ -26,6 +30,7 @@ button{border:0;cursor:pointer}
 .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .time{font-size:12px;color:#83919e}
 .preview{font-size:14px;color:#8e9aa5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:5px}
+.unread{background:#3390ec;color:#fff;border-radius:12px;padding:2px 7px;font-size:11px}
 .main{flex:1;display:flex;flex-direction:column;background:#0e1621;min-width:0}
 .empty{margin:auto;text-align:center;color:#7c8b98}
 .header{height:64px;background:#17212b;display:flex;align-items:center;padding:8px 18px;gap:12px}
@@ -33,6 +38,7 @@ button{border:0;cursor:pointer}
 .messages{flex:1;overflow:auto;padding:20px 8%;display:flex;flex-direction:column;gap:6px}
 .msg{max-width:65%;padding:8px 11px;border-radius:10px;background:#182533;align-self:flex-start;box-shadow:0 1px 1px #0003}
 .msg.mine{align-self:flex-end;background:#2b5278}
+.msguser{font-size:12px;color:#69a9df;margin-bottom:3px}
 .msgtext{white-space:pre-wrap;word-break:break-word}
 .msgtime{font-size:11px;color:#a8b6c2;text-align:right;margin-top:4px}
 .composer{padding:10px 18px;background:#17212b;display:flex;gap:10px}
@@ -40,59 +46,55 @@ button{border:0;cursor:pointer}
 .send{width:46px;height:46px;border-radius:50%;background:#3390ec;color:#fff;font-size:20px}
 .login{width:100%;height:100%;display:grid;place-items:center;background:#0e1621}
 .card{width:min(400px,90%);background:#17212b;border-radius:14px;padding:30px}
-.card h1{margin:0 0 8px}
-.card p{color:#8493a0}
+.card h1{margin:0 0 8px}.card p{color:#8493a0}
 .card input{width:100%;margin:7px 0;padding:13px;border:0;border-radius:8px;background:#242f3a;color:#fff;outline:0}
 .card button{width:100%;margin-top:10px;padding:13px;border-radius:8px;background:#3390ec;color:#fff;font-weight:bold}
 .link{background:none!important;color:#4da3f5!important}
+#error{color:#ff6b6b;margin-top:10px}
+.emptylist{padding:25px;text-align:center;color:#71808d}
 @media(max-width:700px){
-.sidebar{width:100%}
-.main{display:none}
+.sidebar{width:100%}.main{display:none}
 .app.chat-open .sidebar{display:none}
 .app.chat-open .main{display:flex}
-.messages{padding:15px 4%}
-.msg{max-width:82%}
+.messages{padding:15px 4%}.msg{max-width:82%}
 }
 </style>
 </head>
 <body>
-
 <div id="root"></div>
 
 <script>
-const API = "/api";
+const API="/api";
+let token=localStorage.getItem("token");
+let me=null;
+let currentChat=null;
+let poll=null;
 
-let token = localStorage.getItem("token");
-let me = null;
-let currentChat = null;
-let poll = null;
+const $=s=>document.querySelector(s);
 
-const $ = s => document.querySelector(s);
-
-async function api(path, options = {}) {
-  const headers = {"Content-Type":"application/json",...(options.headers||{})};
-  if(token) headers.Authorization = "Bearer " + token;
-
-  const r = await fetch(API + path,{...options,headers});
-  const data = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.error || "Request failed");
+async function api(path,options={}){
+  const headers={"Content-Type":"application/json",...(options.headers||{})};
+  if(token) headers.Authorization="Bearer "+token;
+  const r=await fetch(API+path,{...options,headers});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||"Request failed");
   return data;
 }
 
 function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,x=>({
+  return String(s??"").replace(/[&<>"']/g,x=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[x]));
 }
 
 function loginScreen(){
-  document.body.innerHTML = `
+  document.body.innerHTML=`
   <div class="login">
     <div class="card">
       <h1>CloudChat</h1>
       <p>Telegram-style messenger</p>
-      <input id="username" placeholder="Username">
-      <input id="password" type="password" placeholder="Password">
+      <input id="username" placeholder="Username" autocomplete="username">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password">
       <button onclick="login()">Войти</button>
       <button class="link" onclick="register()">Создать аккаунт</button>
       <div id="error"></div>
@@ -104,10 +106,7 @@ async function login(){
   try{
     const username=$("#username").value.trim();
     const password=$("#password").value;
-    const r=await api("/login",{
-      method:"POST",
-      body:JSON.stringify({username,password})
-    });
+    const r=await api("/login",{method:"POST",body:JSON.stringify({username,password})});
     token=r.token;
     localStorage.setItem("token",token);
     await start();
@@ -118,10 +117,7 @@ async function register(){
   try{
     const username=$("#username").value.trim();
     const password=$("#password").value;
-    const r=await api("/register",{
-      method:"POST",
-      body:JSON.stringify({username,password})
-    });
+    const r=await api("/register",{method:"POST",body:JSON.stringify({username,password})});
     token=r.token;
     localStorage.setItem("token",token);
     await start();
@@ -146,10 +142,16 @@ function renderApp(){
    <aside class="sidebar">
      <div class="top">
        <div class="logo">CloudChat</div>
-       <button class="iconbtn" onclick="logout()">⋮</button>
+       <div class="more-wrap">
+         <button class="iconbtn" onclick="toggleMore(event)" aria-label="Меню">⋮</button>
+         <div id="moreMenu" class="more-menu">
+           <button onclick="openSettings()">⚙ Настройки</button>
+           <button onclick="logout()">Выйти</button>
+         </div>
+       </div>
      </div>
      <div class="search">
-       <input id="search" placeholder="Поиск">
+       <input id="search" placeholder="Поиск пользователей" autocomplete="off">
      </div>
      <div id="chatlist" class="chatlist"></div>
    </aside>
@@ -168,103 +170,231 @@ function renderApp(){
            <div id="status" class="status"></div>
          </div>
        </header>
-
        <div id="messages" class="messages"></div>
-
        <form class="composer" onsubmit="sendMessage(event)">
          <input id="message" autocomplete="off" placeholder="Сообщение">
-         <button class="send">➤</button>
+         <button class="send" type="submit">➤</button>
        </form>
      </div>
    </main>
  </div>`;
+
+ const search=$("#search");
+ search.addEventListener("input",handleSearch);
+ document.addEventListener("click",outsideMenu);
+}
+
+function toggleMore(event){
+  event.stopPropagation();
+  const menu=$("#moreMenu");
+  if(menu) menu.classList.toggle("show");
+}
+
+function outsideMenu(event){
+  const wrap=document.querySelector(".more-wrap");
+  if(wrap && !wrap.contains(event.target)){
+    const menu=$("#moreMenu");
+    if(menu) menu.classList.remove("show");
+  }
+}
+
+function openSettings(){
+  const menu=$("#moreMenu");
+  if(menu) menu.classList.remove("show");
+  location.href="/settings.html";
+}
+
+function logout(){
+  clearInterval(poll);
+  localStorage.removeItem("token");
+  token=null;
+  me=null;
+  currentChat=null;
+  loginScreen();
 }
 
 async function loadChats(){
-  const chats=await api("/chats");
-  const list=$("#chatlist");
+  try{
+    const chats=await api("/chats");
+    renderChats(chats);
+  }catch(e){
+    if(e.message==="Unauthorized"){
+      logout();
+    }
+  }
+}
 
-  list.innerHTML=chats.map(c=>`
-    <div class="chat" onclick="openChat('${c.id}')">
-      <div class="avatar">${escapeHtml((c.name||"?")[0].toUpperCase())}</div>
-      <div class="chatbody">
-        <div class="chatline">
-          <div class="name">${escapeHtml(c.name)}</div>
-          <div class="time">${c.time||""}</div>
+function renderChats(chats){
+  const list=$("#chatlist");
+  if(!list)return;
+
+  if(!chats.length){
+    list.innerHTML='<div class="emptylist">Нет чатов</div>';
+    return;
+  }
+
+  list.innerHTML=chats.map(c=>{
+    const last=c.lastMessage;
+    const preview=last
+      ? (last.username===me?.username?"Вы: ":"")+last.text
+      : "Нет сообщений";
+
+    const unread=c.unread||0;
+
+    return `
+      <div class="chat ${currentChat===c.id?"active":""}" onclick="openChat('${escapeHtml(c.id)}')">
+        <div class="avatar">${escapeHtml((c.name||"?")[0].toUpperCase())}</div>
+        <div class="chatbody">
+          <div class="chatline">
+            <div class="name">${escapeHtml(c.name)}</div>
+            ${unread?`<div class="unread">${unread}</div>`:""}
+          </div>
+          <div class="preview">${escapeHtml(preview)}</div>
         </div>
-        <div class="preview">${escapeHtml(c.lastMessage||"Нет сообщений")}</div>
+      </div>`;
+  }).join("");
+}
+
+let searchTimer=null;
+
+async function handleSearch(){
+  clearTimeout(searchTimer);
+  const q=$("#search").value.trim();
+
+  if(!q){
+    loadChats();
+    return;
+  }
+
+  searchTimer=setTimeout(async()=>{
+    try{
+      const users=await api("/users?q="+encodeURIComponent(q));
+      renderSearchResults(users);
+    }catch(e){}
+  },250);
+}
+
+function renderSearchResults(users){
+  const list=$("#chatlist");
+  if(!list)return;
+
+  if(!users.length){
+    list.innerHTML='<div class="emptylist">Пользователи не найдены</div>';
+    return;
+  }
+
+  list.innerHTML=users.map(u=>`
+    <div class="chat" onclick="startPrivateChat('${escapeHtml(u.id)}')">
+      <div class="avatar">${escapeHtml((u.username||"?")[0].toUpperCase())}</div>
+      <div class="chatbody">
+        <div class="name">${escapeHtml(u.username)}</div>
+        <div class="preview">Нажмите, чтобы открыть чат</div>
       </div>
     </div>
   `).join("");
+}
+
+async function startPrivateChat(userId){
+  try{
+    const chat=await api("/chats",{
+      method:"POST",
+      body:JSON.stringify({type:"private",members:[userId]})
+    });
+    await loadChats();
+    await openChat(chat.id);
+  }catch(e){
+    alert(e.message);
+  }
 }
 
 async function openChat(id){
-  currentChat=id;
-  $("#empty").style.display="none";
-  $("#chatui").style.display="flex";
-  document.querySelector(".app").classList.add("chat-open");
-
-  const chat=await api("/chats/"+id);
-  $("#chatname").textContent=chat.name;
-  $("#status").textContent=chat.type==="private" ? "online" : "group";
-
-  await loadMessages();
-
-  clearInterval(poll);
-  poll=setInterval(loadMessages,2500);
-}
-
-async function loadMessages(){
-  if(!currentChat)return;
-
-  const messages=await api("/chats/"+currentChat+"/messages");
-
-  $("#messages").innerHTML=messages.map(m=>`
-    <div class="msg ${m.userId===me.id?"mine":""}">
-      <div class="msgtext">${escapeHtml(m.text)}</div>
-      <div class="msgtime">
-        ${escapeHtml(m.username)} · ${new Date(m.createdAt).toLocaleTimeString([],{
-          hour:"2-digit",minute:"2-digit"
-        })}
-      </div>
-    </div>
-  `).join("");
-
-  const box=$("#messages");
-  box.scrollTop=box.scrollHeight;
-}
-
-async function sendMessage(e){
-  e.preventDefault();
-
-  const input=$("#message");
-  const text=input.value.trim();
-  if(!text || !currentChat)return;
-
-  input.value="";
-
   try{
-    await api("/chats/"+currentChat+"/messages",{
-      method:"POST",
-      body:JSON.stringify({text})
-    });
+    currentChat=id;
+    $("#empty").style.display="none";
+    $("#chatui").style.display="flex";
+    $(".app").classList.add("chat-open");
+
+    const chat=await api("/chats/"+encodeURIComponent(id));
+    $("#chatname").textContent=chat.name;
+    $("#status").textContent=chat.type==="private"?"online":`${chat.members.length} участников`;
+
     await loadMessages();
+    await markRead();
+
+    clearInterval(poll);
+    poll=setInterval(async()=>{
+      await loadMessages();
+      await loadChats();
+    },2500);
+
     await loadChats();
   }catch(e){
     alert(e.message);
   }
 }
 
+async function loadMessages(){
+  if(!currentChat)return;
+
+  try{
+    const messages=await api("/chats/"+encodeURIComponent(currentChat)+"/messages");
+    const box=$("#messages");
+    if(!box)return;
+
+    box.innerHTML=messages.map(m=>`
+      <div class="msg ${m.userId===me.id?"mine":""}">
+        ${m.userId!==me.id?`<div class="msguser">${escapeHtml(m.username)}</div>`:""}
+        <div class="msgtext">${escapeHtml(m.text)}</div>
+        <div class="msgtime">${new Date(m.createdAt).toLocaleTimeString([],{
+          hour:"2-digit",minute:"2-digit"
+        })}</div>
+      </div>
+    `).join("");
+
+    box.scrollTop=box.scrollHeight;
+  }catch(e){}
+}
+
+async function markRead(){
+  if(!currentChat)return;
+  try{
+    await api("/chats/"+encodeURIComponent(currentChat)+"/read",{method:"POST"});
+  }catch(e){}
+}
+
+async function sendMessage(e){
+  e.preventDefault();
+
+  const input=$("#message");
+  if(!input)return;
+
+  const text=input.value.trim();
+  if(!text||!currentChat)return;
+
+  input.value="";
+
+  try{
+    await api("/chats/"+encodeURIComponent(currentChat)+"/messages",{
+      method:"POST",
+      body:JSON.stringify({text})
+    });
+
+    await loadMessages();
+    await markRead();
+    await loadChats();
+  }catch(e){
+    alert(e.message);
+    input.value=text;
+  }
+}
+
 function closeChat(){
   currentChat=null;
   clearInterval(poll);
-  document.querySelector(".app").classList.remove("chat-open");
-}
-
-function logout(){
-  localStorage.removeItem("token");
-  token=null;
-  location.reload();
+  $("#empty").style.display="block";
+  $("#chatui").style.display="none";
+  $(".app").classList.remove("chat-open");
+  loadChats();
 }
 
 if(token) start();
