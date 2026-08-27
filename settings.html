@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Настройки — CloudChat</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:Arial,sans-serif;
+  background:#0e1621;
+  color:#fff;
+}
+
+body{
+  display:flex;
+  justify-content:center;
+}
+
+.settings{
+  width:100%;
+  max-width:720px;
+  min-height:100vh;
+  background:#17212b;
+}
+
+.header{
+  height:64px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:0 18px;
+  border-bottom:1px solid #263746;
+}
+
+.back{
+  width:40px;
+  height:40px;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  color:#fff;
+  font-size:28px;
+  cursor:pointer;
+}
+
+.back:hover{
+  background:#243442;
+}
+
+.title{
+  font-size:21px;
+  font-weight:600;
+}
+
+.profile{
+  padding:25px 20px;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  border-bottom:8px solid #0e1621;
+}
+
+.avatar{
+  width:72px;
+  height:72px;
+  border-radius:50%;
+  background:#3390ec;
+  display:grid;
+  place-items:center;
+  font-size:28px;
+  font-weight:bold;
+}
+
+.profile-name{
+  font-size:21px;
+  font-weight:600;
+}
+
+.profile-username{
+  margin-top:7px;
+  color:#8b9aa8;
+}
+
+.section{
+  padding:14px 0;
+  border-bottom:8px solid #0e1621;
+}
+
+.section-title{
+  padding:0 20px 9px;
+  color:#5da8e8;
+  font-size:14px;
+  text-transform:uppercase;
+}
+
+.item{
+  min-height:58px;
+  padding:10px 20px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  cursor:pointer;
+}
+
+.item:hover{
+  background:#202f3d;
+}
+
+.item-icon{
+  width:32px;
+  text-align:center;
+  font-size:22px;
+}
+
+.item-content{
+  flex:1;
+}
+
+.item-title{
+  font-size:16px;
+}
+
+.item-description{
+  margin-top:4px;
+  color:#82909d;
+  font-size:13px;
+}
+
+.switch{
+  width:48px;
+  height:28px;
+  border-radius:20px;
+  background:#52606d;
+  padding:3px;
+  transition:.2s;
+}
+
+.switch span{
+  display:block;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#fff;
+  transition:.2s;
+}
+
+.switch.on{
+  background:#3390ec;
+}
+
+.switch.on span{
+  transform:translateX(20px);
+}
+
+.select{
+  background:#242f3a;
+  color:#fff;
+  border:0;
+  outline:0;
+  border-radius:7px;
+  padding:8px 10px;
+}
+
+input[type="text"]{
+  width:100%;
+  margin-top:8px;
+  padding:11px;
+  border:0;
+  outline:0;
+  border-radius:7px;
+  background:#242f3a;
+  color:#fff;
+}
+
+.save{
+  margin-top:10px;
+  padding:11px 18px;
+  border:0;
+  border-radius:8px;
+  background:#3390ec;
+  color:#fff;
+  cursor:pointer;
+}
+
+.danger{
+  color:#ff5c5c;
+}
+
+.logout{
+  color:#ff5c5c;
+}
+
+.status{
+  padding:12px 20px;
+  color:#6fb3e9;
+  font-size:13px;
+}
+
+@media(max-width:700px){
+  .settings{
+    max-width:none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="settings">
+
+  <div class="header">
+    <button class="back" onclick="goBack()">‹</button>
+    <div class="title">Настройки</div>
+  </div>
+
+  <div class="profile">
+    <div class="avatar" id="avatar">?</div>
+
+    <div>
+      <div class="profile-name" id="profileName">
+        Загрузка...
+      </div>
+
+      <div class="profile-username" id="profileUsername">
+        @...
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ACCOUNT -->
+
+  <div class="section">
+
+    <div class="section-title">
+      Аккаунт
+    </div>
+
+    <div class="item">
+      <div class="item-icon">👤</div>
+
+      <div class="item-content">
+        <div class="item-title">
+          Username
+        </div>
+
+        <input
+          id="usernameInput"
+          type="text"
+          maxlength="32"
+        >
+
+        <button
+          class="save"
+          onclick="saveUsername()"
+        >
+          Сохранить
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- APPEARANCE -->
+
+  <div class="section">
+
+    <div class="section-title">
+      Оформление
+    </div>
+
+    <div
+      class="item"
+      onclick="toggleDarkMode()"
+    >
+
+      <div class="item-icon">🌙</div>
+
+      <div class="item-content">
+
+        <div class="item-title">
+          Тёмная тема
+        </div>
+
+        <div class="item-description">
+          Использовать тёмное оформление
+        </div>
+
+      </div>
+
+      <div
+        id="darkSwitch"
+        class="switch on"
+      >
+        <span></span>
+      </div>
+
+    </div>
+
+
+    <div class="item">
+
+      <div class="item-icon">🔤</div>
+
+      <div class="item-content">
+
+        <div class="item-title">
+          Размер текста
+        </div>
+
+      </div>
+
+      <select
+        id="fontSize"
+        class="select"
+        onchange="changeFontSize()"
+      >
+        <option value="small">Маленький</option>
+        <option value="normal" selected>Обычный</option>
+        <option value="large">Большой</option>
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <!-- NOTIFICATIONS -->
+
+  <div class="section">
+
+    <div class="section-title">
+      Уведомления
+    </div>
+
+    <div
+      class="item"
+      onclick="toggleNotifications()"
+    >
+
+      <div class="item-icon">🔔</div>
+
+      <div class="item-content">
+
+        <div class="item-title">
+          Уведомления
+        </div>
+
+        <div class="item-description">
+          Уведомления о новых сообщениях
+        </div>
+
+      </div>
+
+      <div
+        id="notificationSwitch"
+        class="switch on"
+      >
+        <span></span>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- PRIVACY -->
+
+  <div class="section">
+
+    <div class="section-title">
+      Конфиденциальность
+    </div>
+
+    <div class="item">
+
+      <div class="item-icon">🔒</div>
+
+      <div class="item-content">
+
+        <div class="item-title">
+          Последний визит
+        </div>
+
+        <div class="item-description">
+          Кто может видеть ваш последний визит
+        </div>
+
+      </div>
+
+      <select
+        id="lastSeen"
+        class="select"
+      >
+        <option>Все</option>
+        <option>Контакты</option>
+        <option>Никто</option>
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <!-- ABOUT -->
+
+  <div class="section">
+
+    <div class="section-title">
+      Приложение
+    </div>
+
+    <div class="item">
+
+      <div class="item-icon">ℹ️</div>
+
+      <div class="item-content">
+
+        <div class="item-title">
+          CloudChat
+        </div>
+
+        <div class="item-description">
+          Telegram-style messenger
+        </div>
+
+      </div>
+
+      <div class="item-description">
+        v1.0
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- LOGOUT -->
+
+  <div class="section">
+
+    <div
+      class="item logout"
+      onclick="logout()"
+    >
+
+      <div class="item-icon">↪</div>
+
+      <div class="item-content">
+        <div class="item-title">
+          Выйти
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="status"
+    class="status"
+  ></div>
+
+</div>
+
+
+<script>
+
+const API = "/api";
+
+const token =
+  localStorage.getItem("token");
+
+
+/* =========================
+   API
+========================= */
+
+async function api(
+  path,
+  options = {}
+){
+
+  if(!token){
+
+    location.href="/";
+
+    throw new Error("Not authenticated");
+  }
+
+  const headers = {
+    "Content-Type":
+      "application/json",
+
+    "Authorization":
+      "Bearer " + token,
+
+    ...(options.headers || {})
+  };
+
+  const response =
+    await fetch(
+      API + path,
+      {
+        ...options,
+        headers
+      }
+    );
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({}));
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      "Request failed"
+    );
+  }
+
+  return data;
+}
+
+
+/* =========================
+   LOAD PROFILE
+========================= */
+
+async function loadProfile(){
+
+  try{
+
+    const user =
+      await api("/me");
+
+    document
+      .getElementById("profileName")
+      .textContent =
+        user.username;
+
+    document
+      .getElementById("profileUsername")
+      .textContent =
+        "@" + user.username;
+
+    document
+      .getElementById("usernameInput")
+      .value =
+        user.username;
+
+    document
+      .getElementById("avatar")
+      .textContent =
+        user.username
+          .charAt(0)
+          .toUpperCase();
+
+  }catch(error){
+
+    localStorage.removeItem("token");
+
+    location.href="/";
+  }
+}
+
+
+/* =========================
+   DARK MODE
+========================= */
+
+let darkMode =
+  localStorage.getItem(
+    "darkMode"
+  ) !== "false";
+
+
+function updateDarkSwitch(){
+
+  const sw =
+    document.getElementById(
+      "darkSwitch"
+    );
+
+  sw.classList.toggle(
+    "on",
+    darkMode
+  );
+}
+
+
+function toggleDarkMode(){
+
+  darkMode = !darkMode;
+
+  localStorage.setItem(
+    "darkMode",
+    darkMode
+  );
+
+  updateDarkSwitch();
+
+  /*
+   * Сейчас основной интерфейс
+   * использует тёмную тему.
+   * Настройка сохраняется.
+   */
+}
+
+
+/* =========================
+   FONT SIZE
+========================= */
+
+function changeFontSize(){
+
+  const value =
+    document.getElementById(
+      "fontSize"
+    ).value;
+
+  localStorage.setItem(
+    "fontSize",
+    value
+  );
+
+  applyFontSize();
+}
+
+
+function applyFontSize(){
+
+  const value =
+    localStorage.getItem(
+      "fontSize"
+    ) || "normal";
+
+  let size = "16px";
+
+  if(value === "small"){
+    size = "14px";
+  }
+
+  if(value === "large"){
+    size = "18px";
+  }
+
+  document.body.style.fontSize =
+    size;
+
+  document.getElementById(
+    "fontSize"
+  ).value = value;
+}
+
+
+/* =========================
+   NOTIFICATIONS
+========================= */
+
+let notifications =
+  localStorage.getItem(
+    "notifications"
+  ) !== "false";
+
+
+function toggleNotifications(){
+
+  notifications =
+    !notifications;
+
+  localStorage.setItem(
+    "notifications",
+    notifications
+  );
+
+  document
+    .getElementById(
+      "notificationSwitch"
+    )
+    .classList.toggle(
+      "on",
+      notifications
+    );
+}
+
+
+function loadNotificationState(){
+
+  document
+    .getElementById(
+      "notificationSwitch"
+    )
+    .classList.toggle(
+      "on",
+      notifications
+    );
+}
+
+
+/* =========================
+   USERNAME
+========================= */
+
+async function saveUsername(){
+
+  const username =
+    document
+      .getElementById(
+        "usernameInput"
+      )
+      .value
+      .trim();
+
+  if(
+    !/^[a-zA-Z0-9_]{3,32}$/
+      .test(username)
+  ){
+
+    showStatus(
+      "Username должен содержать 3-32 символа"
+    );
+
+    return;
+  }
+
+  /*
+   * Этот endpoint нужно добавить
+   * в worker.js:
+   *
+   * PUT /api/me
+   */
+
+  try{
+
+    const result =
+      await api(
+        "/me",
+        {
+          method:"PUT",
+
+          body:
+            JSON.stringify({
+              username
+            })
+        }
+      );
+
+    document
+      .getElementById(
+        "profileName"
+      )
+      .textContent =
+        result.username;
+
+    document
+      .getElementById(
+        "profileUsername"
+      )
+      .textContent =
+        "@" + result.username;
+
+    document
+      .getElementById(
+        "avatar"
+      )
+      .textContent =
+        result.username
+          .charAt(0)
+          .toUpperCase();
+
+    showStatus(
+      "Username сохранён"
+    );
+
+  }catch(error){
+
+    showStatus(
+      error.message
+    );
+  }
+}
+
+
+/* =========================
+   LAST SEEN
+========================= */
+
+const lastSeen =
+  localStorage.getItem(
+    "lastSeen"
+  );
+
+if(lastSeen){
+
+  document
+    .getElementById(
+      "lastSeen"
+    )
+    .value =
+      lastSeen;
+}
+
+document
+  .getElementById(
+    "lastSeen"
+  )
+  .addEventListener(
+    "change",
+    event => {
+
+      localStorage.setItem(
+        "lastSeen",
+        event.target.value
+      );
+
+      showStatus(
+        "Настройки сохранены"
+      );
+    }
+  );
+
+
+/* =========================
+   STATUS
+========================= */
+
+let statusTimer;
+
+function showStatus(text){
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+  status.textContent =
+    text;
+
+  clearTimeout(
+    statusTimer
+  );
+
+  statusTimer =
+    setTimeout(
+      () => {
+        status.textContent="";
+      },
+      2500
+    );
+}
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+function logout(){
+
+  localStorage.removeItem(
+    "token"
+  );
+
+  location.href="/";
+}
+
+
+/* =========================
+   BACK
+========================= */
+
+function goBack(){
+
+  if(
+    document.referrer
+  ){
+
+    history.back();
+
+  }else{
+
+    location.href="/";
+  }
+}
+
+
+/* =========================
+   INIT
+========================= */
+
+applyFontSize();
+updateDarkSwitch();
+loadNotificationState();
+loadProfile();
+
+</script>
+
+</body>
+</html>
